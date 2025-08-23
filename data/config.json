@@ -1,0 +1,10 @@
+{
+    "quiet": false,
+    "switch-shortcut": [4, 5, 8, 9],
+    "modules": {
+        "config": "data/modules.json",
+        "directory": "modules/",
+        "blacklisted": [],
+        "initial": "media"
+    }
+}

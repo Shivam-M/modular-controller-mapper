@@ -1,0 +1,21 @@
+{
+    "dummy": {},
+    "remote": {
+        "mappings": {},
+        "options": {
+            "disconnect-on-unload": true,
+            "host": "192.168.1.159",
+            "key-file": "data/webos-auth-key.json"
+        }
+    },
+    "media": {
+        "mappings": {}
+    },
+    "mouse": {
+        "mappings": {},
+        "options": {
+            "sensitivity": 1.0,
+            "invert-y": false
+        }
+    }
+}
