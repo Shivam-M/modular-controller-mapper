@@ -2,7 +2,7 @@
 
 Enables programmatic mapping of controller input through the use of configurable 'modules' that can be cycled between using custom controller shortcuts.
 
-### Installation
+### Installation (Python 3.8+)
 
 `pip install -r requirements.txt`
 

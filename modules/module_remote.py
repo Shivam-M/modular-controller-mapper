@@ -94,8 +94,8 @@ class Remote(Module):
 
         if mapped_key := self._get_mapped_key(key):
             self._send_command(mapped_key)
-    
-    def _load_key(self) -> str | None:
+
+    def _load_key(self):
         try:
             with open(self.options["key-file"], "r") as key_file:
                 if key := json.load(key_file).get("key"):
