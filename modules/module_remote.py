@@ -39,8 +39,8 @@ class Remote(Module):
         super().__init__(keyboard, "remote")
         self.mappings = DEFAULT_MAPPINGS
         self.options = DEFAULT_OPTIONS
-        self.client = None
         self.connected = False
+        self.client = None
         self.loop = None
         self.loop_thread = None
         self._shutdown_event = threading.Event()
@@ -55,13 +55,8 @@ class Remote(Module):
         try:
             self._start_event_loop()
             time.sleep(0.25) 
-
-            future = asyncio.run_coroutine_threadsafe(self._connect(), self.loop)
-            success = future.result(timeout=10)
-
-            if success and self.client:
-                self.connected = True
-                return True
+            self.connected = asyncio.run_coroutine_threadsafe(self._connect(), self.loop).result(timeout=10)
+            return self.connected
         except Exception as e:
             self._log(f"remote connection failed: {e}")
             self.connected = False
@@ -70,29 +65,21 @@ class Remote(Module):
     def unload(self) -> bool:
         super().unload()
 
-        if not self.options.get("disconnect-on-unload", True):
-            return True
-
-        if self.client and self.connected:
+        if self.options["disconnect-on-unload"] and self.client and self.connected:
             try:
-                future = asyncio.run_coroutine_threadsafe(self.client.disconnect(), self.loop)
-                future.result(timeout=5)
+                asyncio.run_coroutine_threadsafe(self.client.disconnect(), self.loop).result(timeout=5)
                 self._log("disconnected successfully")
             except Exception as e:
                 self._log(f"error during disconnect: {e}")
                 return False
 
         self._stop_event_loop()
-
         self.client = None
         self.connected = False
         return True
 
     def on_key(self, key: Key):
-        if not self.connected or not self.client:
-            return
-
-        if mapped_key := self._get_mapped_key(key):
+        if self.connected and self.client and (mapped_key := self._get_mapped_key(key)):
             self._send_command(mapped_key)
 
     def _load_key(self):
@@ -121,7 +108,6 @@ class Remote(Module):
     def _stop_event_loop(self):
         if self.loop and self.loop.is_running():
             self.loop.call_soon_threadsafe(self.loop.stop)
-        
         if self.loop_thread and self.loop_thread.is_alive():
             self.loop_thread.join(timeout=2)
 
@@ -131,8 +117,7 @@ class Remote(Module):
             return
 
         try:
-            future = asyncio.run_coroutine_threadsafe(self.client.button(command), self.loop)
-            future.result(timeout=5)
+            asyncio.run_coroutine_threadsafe(self.client.button(command), self.loop).result(timeout=5)
             self._log(f"sent command: {command}")
         except asyncio.TimeoutError:
             self._log(f"timeout sending command: {command}")
@@ -141,11 +126,8 @@ class Remote(Module):
 
     async def _connect(self) -> bool:
         try:
-            self.client = WebOsClient(self.options["host"])
-            self._log(f"created webOS client")
-
-            if stored_key := self._load_key():
-                self.client.client_key = stored_key
+            stored_key = self._load_key()
+            self.client = WebOsClient(self.options["host"], client_key=stored_key)
 
             self._log(f"connecting to {self.options['host']}")
             await self.client.connect()
@@ -158,7 +140,6 @@ class Remote(Module):
                 self._save_key(self.client.client_key)
 
             return True
-
         except Exception as e:
             self._log(f"connection error: {e}")
             self.client = None
