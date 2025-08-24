@@ -17,6 +17,7 @@ Run `core.py` and configure using `data/config.json`
 {
     "quiet": false,  // log verbosity
     "ignore-multiple-buttons": true,  // only allow one button to be pressed at a time
+    "haptic-feedback": true,  // controller vibration feedback on register and module switch
     "switch-shortcut": [4, 5, 8, 9],  // press these buttons to switch between modules
     "modules": {
         "config": "data/modules.json",  // config file for all modules
@@ -88,8 +89,8 @@ Run `core.py` and configure using `data/config.json`
 
 ```
  l-bumper (btn)                          r-bumper (btn)
-   [   4   ]                               [   5   ]
-
+   [   4   ]           xbox (btn)          [   5   ]
+                        [  10  ]
  l-stick (btn)                             xy/ab (btn)
     ╔═════╗      view (btn)   menu (btn)       3
     ║  8  ║        [ 6 ]         [ 7 ]       2 □ 1
