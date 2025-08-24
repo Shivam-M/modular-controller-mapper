@@ -1,6 +1,8 @@
 # Modular Controller Mapper
 
-Enables programmatic mapping of controller input through the use of configurable 'modules' that can be cycled between using custom controller shortcuts.
+Allows programmable mapping of controller input through configurable 'modules' which can be cycled between using custom controller shortcuts.
+
+----
 
 ### Installation (Python 3.8+)
 
@@ -11,7 +13,7 @@ Enables programmatic mapping of controller input through the use of configurable
 Run `core.py` and configure using `data/config.json`
 
 #### `config.json`
-```Json
+```JSON
 {
     "quiet": false,  // log verbosity
     "ignore-multiple-buttons": true,  // only allow one button to be pressed at a time
@@ -26,7 +28,6 @@ Run `core.py` and configure using `data/config.json`
 }
 ```
 
-
 ### Built-in Modules
 
 #### `module_media.py`
@@ -37,14 +38,16 @@ Run `core.py` and configure using `data/config.json`
 #### `module_remote.py`
 * LG WebOS remote control using [aiowebostv](https://github.com/home-assistant-libs/aiowebostv) (wrapped in a thread)
 * Requires you to accept the pairing request on the TV when first connecting
-* Auth token is stored at `data/webos-auth-key.json` by default but ideally should be moved elsewhere through changing `data/modules.json`
+* Auth key is stored at `data/remote-secrets.json` by default but ideally should be moved elsewhere by changing `data/modules.json`
+* If the initial connection is unsuccessful, a Wake-on-LAN packet is sent when the mapped `POWER` button is pressed
+* The MAC address is resolved automatically or it can be manually set in `data/remote-secrets.json`
 
 #### `module_dummy.py`
-* Dummy module which does nothing and acts as a 'disabled' state to put the controller in when switching between modules
+* Does nothing and acts as a 'disabled' state to put the controller in when switching through modules
 
 #### `modules.json`
 
-```Json
+```JSON
 {
     "dummy": {},
     "remote": {
@@ -52,7 +55,12 @@ Run `core.py` and configure using `data/config.json`
         "options": {
             "disconnect-on-unload": true,  // disconnect from the TV when switching out of the module
             "host": "192.168.1.159",  // IP address of the TV
-            "key-file": "data/webos-auth-key.json"  // stores the auth token
+            "secrets-file": "data/remote-secrets.json",  // stores the auth token and MAC address (for WoL)
+            "wake-on-lan": {
+                "enabled": true,  // send a WoL packet if the 'POWER' button is pressed while disconnected
+                "sleep-after-wake": 25,  // time in seconds to wait before connecting after sending the packet
+                "broadcast-address": "192.168.1.255"
+            }
         }
     },
     "media": {
@@ -70,10 +78,9 @@ Run `core.py` and configure using `data/config.json`
     * `load(self)` - when switching into the module (call super to load config)
     * `unload(self)` - clean up when switching out of the module
     * `on_key(self, key: Key)` - called when a controller button has been pressed
-5. **optional:** add the module to `modules.json` to load configured mappings and options
+5. **optional:** add the module to `modules.json` to support configurable mappings and options
     * custom mappings and options will be loaded into `self.mappings`/`self.options` (on top of any defaults)
-6. Import the module in `modules/__init__.py` and it to the `MODULES` list
-
+6. Import the module in `modules/__init__.py` and add it to the `MODULE_CLASSES` list
 
 ### Reference
 
@@ -96,9 +103,9 @@ Run `core.py` and configure using `data/config.json`
        └───────┘
 ```
 
-
 ### TODO
 
-* *Safely* loading module classes with importlib
-* Register and repeat when buttons are held down
+* Serialise mappings to use with `modules.json`
+* *Safely* load module classes with importlib
+* Register and repeat actions when buttons are held down
 * Axis mappings with respect for deadzone values
