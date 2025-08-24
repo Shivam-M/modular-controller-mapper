@@ -3,14 +3,18 @@ from modules.module import Module
 from modules.module_dummy import Dummy
 from pyjoystick.sdl2 import Key, Joystick, run_event_loop
 from pynput.keyboard import Controller
+from threading import Thread
+from time import sleep
 import os
 import json
+import sdl2
 
 
-CONFIG_FILE = os.getenv("MAPPER K_CONFIG_FILE", "data/config.json")
+CONFIG_FILE = os.getenv("MAPPER_CONFIG_FILE", "data/config.json")
 DEFAULT_CONFIG = {
     "quiet": False,
     "ignore-multiple-buttons": True,
+    "haptic-feedback": True,
     "switch-shortcut": [4, 5, 8, 9],
     "modules": {
         "config": "data/modules.json",
@@ -27,6 +31,7 @@ class Core:
         self.modules = [Dummy()]
         self.current_module = self.modules[0]
         self.keyboard = Controller()
+        self.haptic = None
         self.pressed_buttons = set()
 
     def configure(self, config_file=CONFIG_FILE):
@@ -35,11 +40,20 @@ class Core:
                 self.config.update(json.load(config))
         except FileNotFoundError:
             print(f"warning: config file '{config_file}' does not exist - using defaults")
-    
+
     def register(self, controller: Joystick):
+        sdl2.SDL_Init(sdl2.SDL_INIT_JOYSTICK | sdl2.SDL_INIT_HAPTIC)
+        if joystick := sdl2.SDL_JoystickOpen(0):
+            haptic = sdl2.SDL_HapticOpenFromJoystick(joystick)
+            if sdl2.SDL_HapticRumbleInit(haptic) == 0:
+                self.haptic = haptic
+                self._log("haptics enabled")
+
+        self.vibrate(delay=0)
         self._log(f"controller: registered {controller}")
 
     def unregister(self, controller: Joystick):
+        self.haptic = None
         self._log(f"controller: unregistered {controller}")
 
     def callback(self, key: Key):
@@ -59,7 +73,7 @@ class Core:
 
         if self.current_module:
             self.current_module.on_key(key)
-    
+
     def add_modules_from_list(self):
         for module_class in MODULE_CLASSES:
             module_name = module_class.__name__.lower()
@@ -76,11 +90,20 @@ class Core:
             self._log(f"module: setting initial '{module.name}'")
             self.switch_module(module)
 
-    def switch_module(self, module: Module=None):
+    def switch_module(self, module: Module = None):
         self.current_module.unload()
         self.current_module = module if module else self._get_next_module()
         if not self.current_module.load():
             print(f"error: failed to load module '{self.current_module.name}'")
+
+    def vibrate(self, strength: float = 0.5, duration: int = 500, count: int = 1, delay: float = 0.5):
+        def _vibrate():
+             for _ in range(count):
+                sleep(delay)
+                sdl2.SDL_HapticRumblePlay(self.haptic, strength, duration)
+
+        if self.haptic and self.config["haptic-feedback"]:
+            Thread(target=_vibrate, daemon=True).start()
 
     def _get_next_module(self):
         next_index = (self.modules.index(self.current_module) + 1) % len(self.modules)
@@ -88,6 +111,7 @@ class Core:
         if self.config["modules"]["skip-dummy-cycle"] and isinstance(next_module, Dummy):
             next_index = (next_index + 1) % len(self.modules)
             next_module = self.modules[next_index]
+        self.vibrate(0.9, 100, next_index + 1, 0.25)
         return next_module
 
     def _log(self, message: str):
