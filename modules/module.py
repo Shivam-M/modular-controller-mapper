@@ -15,10 +15,12 @@ class Module(ABC):
     def load(self) -> bool:
         self._log("loading")
         self._load_config()
+        return True
 
     @abstractmethod
     def unload(self) -> bool:
         self._log("unloading")
+        return True
 
     @abstractmethod
     def on_key(self, key: Key):

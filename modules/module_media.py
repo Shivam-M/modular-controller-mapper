@@ -12,12 +12,15 @@ DEFAULT_MAPPINGS = {
         Key.HAT_RIGHT: KBKey.right
     },
     Key.KeyTypes.BUTTON: {
-        0: KBKey.media_volume_down, # A
+        0: KeyCode.from_char('G'),  # A
+        3: KeyCode.from_char('H'),  # Y
         1: KeyCode.from_char(']'),  # B
         2: KeyCode.from_char('['),  # X
-        3: KBKey.media_volume_up,   # Y
+        4: KBKey.media_volume_down, # L-BUMPER
+        5: KBKey.media_volume_up,   # R-BUMPER
         6: KBKey.media_stop,        # VIEW / BACK
         7: KBKey.media_play_pause,  # MENU / START
+        8: KeyCode.from_char('V'),  # L-STICK
     }
 }
 
@@ -27,12 +30,10 @@ class Media(Module):
         self.mappings = DEFAULT_MAPPINGS
 
     def load(self) -> bool:
-        super().load()
-        return True
+        return super().load()
 
     def unload(self) -> bool:
-        super().unload()
-        return True
+        return super().unload()
 
     def on_key(self, key: Key):
         if mapped_key := self._get_mapped_key(key):

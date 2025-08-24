@@ -6,33 +6,17 @@ from pynput.keyboard import Controller
 import json
 
 
-""" Xbox Controller Layout
-
- l-bumper (btn)                          r-bumper (btn)
-   [   4   ]                               [   5   ]
-
- l-stick (btn)                             xy/ab (btn)
-    ╔═════╗      view (btn)   menu (btn)       3
-    ║  8  ║        [ 6 ]         [ 7 ]       2 □ 1
-    ╚═════╝                                    0
-
-      d-pad (hat)
-       ┌───────┐                      r-stick (btn)
-       │   1   │                        ╔═════╗
-       │ 8 ● 2 │                        ║  9  ║
-       │   4   │                        ╚═════╝
-       └───────┘
-"""
-
 CONFIG_FILE = "data/config.json"
 DEFAULT_CONFIG = {
     "quiet": False,
+    "ignore-multiple-buttons": True,
     "switch-shortcut": [4, 5, 8, 9],
     "modules": {
         "config": "data/modules.json",
         "directory": "modules/",
         "blacklisted": [],
-        "initial": "dummy"
+        "initial": "dummy",
+        "skip-dummy-cycle": False
     }
 }
 
@@ -64,12 +48,15 @@ class Core:
                 self.pressed_butons.add(key.number)
             elif key.value == 0:
                 self.pressed_butons.discard(key.number)
-        if self.current_module:
-            self.current_module.on_key(key)
         if set(self.config["switch-shortcut"]).issubset(self.pressed_butons):
             self._log("module: switching after triggering shortcut")
             self.pressed_butons.clear()
             self.switch_module()
+            return
+        if len(self.pressed_butons) > 1 and self.config["ignore-multiple-buttons"]:
+            return
+        if self.current_module:
+            self.current_module.on_key(key)
     
     def add_modules_from_list(self):
         for module_class in MODULE_CLASSES:
@@ -94,6 +81,10 @@ class Core:
             current_index = self.modules.index(self.current_module)
             next_index = (current_index + 1) % len(self.modules)
             self.current_module = self.modules[next_index]
+            if (self.current_module.name == "dummy" and
+                self.config["modules"]["skip-dummy-cycle"]):
+                next_index = (next_index + 1) % len(self.modules)
+                self.current_module = self.modules[next_index]
         else:
             self.current_module = module
 

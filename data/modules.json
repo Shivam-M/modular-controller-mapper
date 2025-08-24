@@ -15,7 +15,8 @@
         "mappings": {},
         "options": {
             "sensitivity": 1.0,
-            "invert-y": false
+            "invert-y": false,
+            "deadzone": 0.1
         }
     }
 }
