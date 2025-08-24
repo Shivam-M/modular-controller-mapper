@@ -1,3 +1,5 @@
 pyjoystick
 pynput
 aiowebostv
+get-mac
+wakeonlan

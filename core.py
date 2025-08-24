@@ -3,10 +3,11 @@ from modules.module import Module
 from modules.module_dummy import Dummy
 from pyjoystick.sdl2 import Key, Joystick, run_event_loop
 from pynput.keyboard import Controller
+import os
 import json
 
 
-CONFIG_FILE = "data/config.json"
+CONFIG_FILE = os.getenv("MAPPER K_CONFIG_FILE", "data/config.json")
 DEFAULT_CONFIG = {
     "quiet": False,
     "ignore-multiple-buttons": True,

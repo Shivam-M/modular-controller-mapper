@@ -5,7 +5,12 @@
         "options": {
             "disconnect-on-unload": true,
             "host": "192.168.1.159",
-            "key-file": "data/webos-auth-key.json"
+            "secrets-file": "data/remote-secrets.json",
+            "wake-on-lan": {
+                "enabled": true,
+                "sleep-after-wake": 30,
+                "broadcast-address": "192.168.1.255"
+            }
         }
     },
     "media": {
