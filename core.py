@@ -26,7 +26,7 @@ class Core:
         self.modules = [Dummy()]
         self.current_module = self.modules[0]
         self.keyboard = Controller()
-        self.pressed_butons = set()
+        self.pressed_buttons = set()
 
     def configure(self, config_file=CONFIG_FILE):
         try:
@@ -44,17 +44,18 @@ class Core:
     def callback(self, key: Key):
         # self._log(f"key: {key.keytype=} {key.number=} {key.value=}")
         if key.keytype == Key.KeyTypes.BUTTON:
-            if key.value == 1:
-                self.pressed_butons.add(key.number)
-            elif key.value == 0:
-                self.pressed_butons.discard(key.number)
-        if set(self.config["switch-shortcut"]).issubset(self.pressed_butons):
+            self.pressed_buttons.add(key.number) if key.value else self.pressed_buttons.discard(key.number)
+
+        if set(self.config["switch-shortcut"]).issubset(self.pressed_buttons):
             self._log("module: switching after triggering shortcut")
-            self.pressed_butons.clear()
+            self.pressed_buttons.clear()
             self.switch_module()
             return
-        if len(self.pressed_butons) > 1 and self.config["ignore-multiple-buttons"]:
+
+        if key.keytype == Key.KeyTypes.BUTTON and len(self.pressed_buttons) > 1 and self.config["ignore-multiple-buttons"]:
+            self._log(f"callback: ignoring button {key.number} because {self.pressed_buttons} are pressed")
             return
+
         if self.current_module:
             self.current_module.on_key(key)
     
@@ -76,20 +77,17 @@ class Core:
 
     def switch_module(self, module: Module=None):
         self.current_module.unload()
-
-        if not module:
-            current_index = self.modules.index(self.current_module)
-            next_index = (current_index + 1) % len(self.modules)
-            self.current_module = self.modules[next_index]
-            if (self.current_module.name == "dummy" and
-                self.config["modules"]["skip-dummy-cycle"]):
-                next_index = (next_index + 1) % len(self.modules)
-                self.current_module = self.modules[next_index]
-        else:
-            self.current_module = module
-
+        self.current_module = module if module else self._get_next_module()
         if not self.current_module.load():
             print(f"error: failed to load module '{self.current_module.name}'")
+
+    def _get_next_module(self):
+        next_index = (self.modules.index(self.current_module) + 1) % len(self.modules)
+        next_module = self.modules[next_index]
+        if self.config["modules"]["skip-dummy-cycle"] and isinstance(next_module, Dummy):
+            next_index = (next_index + 1) % len(self.modules)
+            next_module = self.modules[next_index]
+        return next_module
 
     def _log(self, message: str):
         if not self.config.get("quiet"):
