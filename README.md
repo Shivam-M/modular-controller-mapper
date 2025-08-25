@@ -43,6 +43,9 @@ Run `core.py` and configure using `data/config.json`
 * If the initial connection is unsuccessful, a Wake-on-LAN packet is sent when the mapped `POWER` button is pressed
 * The MAC address is resolved automatically or it can be manually set in `data/remote-secrets.json`
 
+### `module_mouse.py`
+* Maps controller input to mouse functions (moving, clicking, scrolling)
+
 #### `module_dummy.py`
 * Does nothing and acts as a 'disabled' state to put the controller in when switching through modules
 
@@ -52,7 +55,7 @@ Run `core.py` and configure using `data/config.json`
 {
     "dummy": {},
     "remote": {
-        "mappings": {},  // custom mappings
+        "mappings": {},  // custom mappings (unused)
         "options": {
             "disconnect-on-unload": true,  // disconnect from the TV when switching out of the module
             "host": "192.168.1.159",  // IP address of the TV
@@ -67,6 +70,17 @@ Run `core.py` and configure using `data/config.json`
     "media": {
         "mappings": {}
     },
+    "mouse": {
+        "mappings": {},
+        "options": {
+            "sensitivity": 1.0,  // horizontal and vertical mouse sensitivity
+            "invert-horizontal": false,  // flip y-axis movement
+            "deadzone": 0.15,  // ignore axis input below this value
+            "acceleration": 5.0,  // acceleration factor
+            "scroll-sensitivity": 1.0,  // horizontal and vertical scroll speed
+            "movement-update-rate": 144  // mouse update frequency
+        }
+    }
 }
 ```
 

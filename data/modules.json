@@ -20,8 +20,11 @@
         "mappings": {},
         "options": {
             "sensitivity": 1.0,
-            "invert-y": false,
-            "deadzone": 0.1
+            "invert-horizontal": false,
+            "deadzone": 0.15,
+            "acceleration": 5.0,
+            "scroll-sensitivity": 0.5,
+            "movement-update-rate": 144
         }
     }
 }

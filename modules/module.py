@@ -23,19 +23,21 @@ class Module(ABC):
         return True
 
     @abstractmethod
-    def on_key(self, key: Key):
+    def on_key(self, _: Key):
         pass
 
-    def _get_mapped_key(self, key: Key):
-        if key.keytype in self.mappings:
-            if key.keytype == Key.KeyTypes.HAT:
-                if key.value in self.mappings[key.keytype]:
-                    return self.mappings[key.keytype][key.value]
-            if key.keytype == Key.KeyTypes.BUTTON and key.value == 1:
-                if key.number in self.mappings[key.keytype]:
-                    return self.mappings[key.keytype][key.number]
-        return None
-    
+    def _get_mapped_key(self, key: Key, map_button_release: bool = False):
+        if not (mapping := self.mappings.get(key.keytype)):
+            return None
+
+        if key.keytype == Key.KeyTypes.HAT:
+            return mapping.get(key.value)
+
+        if key.keytype == Key.KeyTypes.BUTTON and key.value == 0 and not map_button_release:
+            return None
+
+        return mapping.get(key.number)
+
     def _load_config(self):
         try:
             with open("data/modules.json", "r") as modules_file:
@@ -45,6 +47,6 @@ class Module(ABC):
                 self._log("config loaded successfully")
         except Exception:
             self._log(f"failed to load config")
-    
+
     def _log(self, message: str):
         print(f"module-{self.name}: {message}")
